@@ -1,0 +1,21 @@
+{
+  "name": "elecapp",
+  "private": true,
+  "version": "0.0.0",
+  "main": "./electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "concurrently": "^9.1.2",
+    "electron": "^36.1.0",
+    "svelte": "^5.28.1",
+    "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.1"
+  }
+}
