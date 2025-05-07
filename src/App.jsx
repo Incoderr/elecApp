@@ -15,7 +15,7 @@ function App() {
 
   // Initialize socket connection
   useEffect(() => {
-    const newSocket = io('http://localhost:3000');
+    const newSocket = io('https://elecserver-production.up.railway.app');
     setSocket(newSocket);
 
     return () => {
