@@ -1,21 +1,21 @@
-import { useState, useEffect, useRef } from 'react';
-import { io } from 'socket.io-client';
-import './App.css';
+import { useState, useEffect, useRef } from "react";
+import { io } from "socket.io-client";
 
 function App() {
   const [socket, setSocket] = useState(null);
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
   const messagesEndRef = useRef(null);
+  const textareaRef = useRef(null);
 
   // Initialize socket connection
   useEffect(() => {
-    const newSocket = io('https://elecserver-production.up.railway.app');
+    const newSocket = io("https://elecserver-production.up.railway.app");
     setSocket(newSocket);
 
     return () => {
@@ -27,39 +27,44 @@ function App() {
   useEffect(() => {
     if (!socket) return;
 
-    // Listen for incoming messages
-    socket.on('message', (newMessage) => {
+    socket.on("message", (newMessage) => {
       setMessages((prevMessages) => [...prevMessages, newMessage]);
     });
 
-    // Listen for user list updates
-    socket.on('userList', (userList) => {
+    socket.on("userList", (userList) => {
       setUsers(userList);
     });
 
-    // Listen for errors
-    socket.on('error', (errorMessage) => {
+    socket.on("error", (errorMessage) => {
       setError(errorMessage);
-      setTimeout(() => setError(''), 3000);
+      setTimeout(() => setError(""), 3000);
     });
 
     return () => {
-      socket.off('message');
-      socket.off('userList');
-      socket.off('error');
+      socket.off("message");
+      socket.off("userList");
+      socket.off("error");
     };
   }, [socket]);
 
   // Auto scroll to bottom when messages update
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Disable page scroll
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto"; // Restore on unmount
+    };
+  }, []);
 
   // Handle user login
   const handleLogin = (e) => {
     e.preventDefault();
     if (username.trim() && socket) {
-      socket.emit('join', username.trim());
+      socket.emit("join", username.trim());
       setIsLoggedIn(true);
     }
   };
@@ -68,33 +73,41 @@ function App() {
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (message.trim() && socket) {
-      socket.emit('chatMessage', message);
-      setMessage('');
+      socket.emit("chatMessage", message);
+      setMessage("");
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+      }
     }
   };
 
   // Format timestamp for display
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   if (!isLoggedIn) {
     return (
-      <div className="login-container">
-        <div className="login-form">
-          <h2>Вход в чат</h2>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="p-3 bg-white rounded-md w-80">
+          <h2 className="mb-4 text-center text-2xl text-black">Вход в чат</h2>
           {error && <div className="error-message">{error}</div>}
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleLogin} className="flex flex-col">
             <input
               type="text"
               placeholder="Введите имя пользователя"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
-              className='ring-1 ring-black'
+              className="bg-gray-700 text-white rounded-md p-2 mb-2 w-full"
             />
-            <button type="submit">Войти</button>
+            <button
+              type="submit"
+              className="bg-blue-500 cursor-pointer text-white rounded-md p-2 w-full"
+            >
+              Войти
+            </button>
           </form>
         </div>
       </div>
@@ -102,50 +115,70 @@ function App() {
   }
 
   return (
-    <div className="chat-container">
-      <div className="sidebar">
-        <h2>Активные пользователи</h2>
-        <ul className="user-list">
+    <div className="flex min-h-screen bg-[#1a1a1e]">
+      <div className="border-r border-white/20 p-3 flex flex-col min-h-screen">
+        <h2 className="mb-2 text-lg">Активные пользователи</h2>
+        <ul>
           {users.map((user) => (
-            <li key={user.id} className="user-item">
+            <li key={user.id}>
               {user.name}
               {user.name === username && " (вы)"}
             </li>
           ))}
         </ul>
       </div>
-      
-      <div className="chat-main">
-        <div className="chat-header">
+
+      <div className="flex w-full flex-col">
+        <div className="p-3 bg-gray-600 flex items-center justify-between">
           <h2>Чат</h2>
-          <span>Вы вошли как: <strong>{username}</strong></span>
+          <span>
+            Вы вошли как: <strong>{username}</strong>
+          </span>
         </div>
-        
-        <div className="messages-container">
+
+        <div className="p-4 flex flex-col gap-2 grow max-h-[calc(100vh-120px)] overflow-y-auto">
           {messages.map((msg, index) => (
-            <div 
-              key={index} 
-              className={`message ${msg.user === username ? 'own-message' : msg.user === 'System' ? 'system-message' : ''}`}
+            <div
+              key={index}
+              className={`message ${
+                msg.user === username
+                  ? ""
+                  : msg.user === "System"
+                  ? "Systemmes"
+                  : ""
+              }`}
             >
-              <div className="message-header">
-                <span className="message-user">{msg.user === username ? 'Вы' : msg.user}</span>
-                <span className="message-time">{formatTimestamp(msg.timestamp)}</span>
+              <div>
+                <span className="text-xl">{msg.user}</span>
+                <span className="text-[12px] ml-2">
+                  {formatTimestamp(msg.timestamp)}
+                </span>
               </div>
-              <div className="message-text">{msg.text}</div>
+              <div className="px-4">
+                <span className="break-words">{msg.text}</span>
+              </div>
             </div>
           ))}
           <div ref={messagesEndRef} />
         </div>
-        
-        <form className="message-form" onSubmit={handleSendMessage}>
-          <input
-            type="text"
+
+        <form className="p-2 flex" onSubmit={handleSendMessage}>
+          <textarea
+            ref={textareaRef}
             placeholder="Введите сообщение..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             required
+            className="p-2 bg-[#222327] mr-2 max-h-60 rounded-md w-full resize-none overflow-hidden leading-tight"
+            rows={1}
+            onInput={(e) => {
+              e.target.style.height = "auto";
+              e.target.style.height = `${e.target.scrollHeight}px`;
+            }}
           />
-          <button type="submit">Отправить</button>
+          <button type="submit" className="bg-blue-600 p-2 rounded-md">
+            Отправить
+          </button>
         </form>
       </div>
     </div>
