@@ -81,6 +81,14 @@ function App() {
     }
   };
 
+  // Handle Enter key press for sending messages
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault(); // Prevent adding new line
+      handleSendMessage(e); // Send message
+    }
+  };
+
   // Format timestamp for display
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
@@ -168,6 +176,7 @@ function App() {
             placeholder="Введите сообщение..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyDown} // Add keydown handler
             required
             className="p-2 bg-[#222327] mr-2 max-h-60 rounded-md w-full resize-none overflow-hidden leading-tight"
             rows={1}
