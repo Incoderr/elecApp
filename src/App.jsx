@@ -9,6 +9,7 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
+  const [lastMessageTime, setLastMessageTime] = useState(0); // Track last message time
 
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
@@ -35,7 +36,7 @@ function App() {
       setUsers(userList);
     });
 
-    socket.on(" coalitions", (errorMessage) => {
+    socket.on("error", (errorMessage) => {
       setError(errorMessage);
       setTimeout(() => setError(""), 3000);
     });
@@ -69,12 +70,22 @@ function App() {
     }
   };
 
-  // Handle sending messages
+  // Handle sending messages with spam protection
   const handleSendMessage = (e) => {
     e.preventDefault();
+    const currentTime = Date.now();
+    const spamDelay = 1000; // 2 seconds delay between messages
+
+    if (currentTime - lastMessageTime < spamDelay) {
+      setError("Подождите перед отправкой следующего сообщения");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+
     if (message.trim() && socket) {
       socket.emit("chatMessage", message);
       setMessage("");
+      setLastMessageTime(currentTime); // Update last message time
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
       }
@@ -175,9 +186,9 @@ function App() {
             ref={textareaRef}
             placeholder="Введите сообщение..."
             value={message}
-            onChange={(e) => setMessage(e.target.value.slice(0, 2000))} // Limit to 200 chars
+            onChange={(e) => setMessage(e.target.value.slice(0, 2000))}
             onKeyDown={handleKeyDown}
-            maxLength={2000} // Browser-level limit
+            maxLength={2000}
             required
             className="p-2 bg-[#222327] mr-2 max-h-60 rounded-md w-full resize-none overflow-hidden leading-tight"
             rows={1}
