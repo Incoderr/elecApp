@@ -35,7 +35,7 @@ function App() {
       setUsers(userList);
     });
 
-    socket.on("error", (errorMessage) => {
+    socket.on(" coalitions", (errorMessage) => {
       setError(errorMessage);
       setTimeout(() => setError(""), 3000);
     });
@@ -175,8 +175,9 @@ function App() {
             ref={textareaRef}
             placeholder="Введите сообщение..."
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown} // Add keydown handler
+            onChange={(e) => setMessage(e.target.value.slice(0, 2000))} // Limit to 200 chars
+            onKeyDown={handleKeyDown}
+            maxLength={2000} // Browser-level limit
             required
             className="p-2 bg-[#222327] mr-2 max-h-60 rounded-md w-full resize-none overflow-hidden leading-tight"
             rows={1}
